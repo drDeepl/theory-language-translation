@@ -4,9 +4,12 @@ using namespace std;
 enum States //возможные состояния автомата
 {
   state_start,
-  state_slash,
-  state_star,
-  state_start_end
+  state_escape_comment,
+  state_star_comment,
+  state_one_line_comment,
+  state_end_line_comment,
+  state_string_literal,
+  state_char_literal
 };
 
 int main() {
@@ -19,32 +22,61 @@ int main() {
     cout << "Файл не открыт\n\n";
     return 0;
   }
-  cout << "Успешное открытоие файла!\n\n";
+  cout << "Успешное открытие файла!\n\n";
 
   char s;
   file.get(s);
 
   States state = state_start;
 
-  while (s != '$') {
+  while (!file.eof()) {
+
     switch (state) {
+
     case state_start:
       if (s == '/') {
-        state = state_slash;
+        state = state_escape_comment;
+      } else if (s == '"') {
+        cout << s;
+        state = state_string_literal;
+      } else if (s == '\'') {
+        cout << s;
+        state = state_char_literal;
       } else {
         cout << s;
       }
       break;
-    case state_slash:
+    case state_char_literal:
+      if (s == '\'') {
+        state = state_start;
+      }
+      cout << s;
+      break;
+    case state_string_literal:
+      if (s == '"') {
+        state = state_start;
+      }
+      cout << s;
+      break;
+    case state_escape_comment:
       if (s == '*') {
-        state = state_star;
+        state = state_star_comment;
+      } else if (s == '/') {
+        state = state_one_line_comment;
       } else {
         state = state_start;
       }
       break;
-    case state_star:
+
+    case state_one_line_comment:
+      if (s == '\n') {
+        state = state_start;
+      }
+      break;
+
+    case state_star_comment:
       if (s == '/') {
-        state = state_slash;
+        state = state_escape_comment;
       }
       break;
     }
